@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/socarcomunica/financial-api/internal"
+)
 
 func main() {
-	fmt.Println("Hola Mundo")
+	if err := internal.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
