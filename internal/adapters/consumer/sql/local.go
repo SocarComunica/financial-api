@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	AddTransactionError = "AddTransactionError Local Client: "
-	CreateAccountError  = "CreateAccountError Local Client: "
+	AddTransactionError         = "AddTransactionError Local Client: "
+	CreateAccountError          = "CreateAccountError Local Client: "
+	ErrorUpdatingAccountBalance = "error updating account balance: "
 )
 
 type localClient struct {
@@ -71,4 +72,13 @@ func (l *localClient) GetAccount(id uint) (*domain.Account, error) {
 	}
 
 	return &account, nil
+}
+
+func (l *localClient) UpdateAccountBalance(account *domain.Account) error {
+	result := l.DB.Save(account)
+	if result.Error != nil {
+		return errors.New(ErrorUpdatingAccountBalance + result.Error.Error())
+	}
+
+	return nil
 }

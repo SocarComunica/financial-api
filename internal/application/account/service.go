@@ -27,9 +27,10 @@ func NewAccountsDatabase(database AccountsDatabase) *Service {
 
 func (a *Service) AddAccount(request request.CreateAccount) (*domain.Account, error) {
 	accountModel := &domain.Account{
-		Name:    request.Name,
-		Type:    request.Type,
-		Balance: request.Balance,
+		Name:           request.Name,
+		Type:           request.Type,
+		Balance:        request.Balance,
+		InitialBalance: request.Balance,
 	}
 
 	account, err := a.Database.AddAccount(accountModel)

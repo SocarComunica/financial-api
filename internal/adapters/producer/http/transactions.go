@@ -34,15 +34,15 @@ func (t *TransactionsHandler) AddRoutes(router *echo.Router) {
 func (t *TransactionsHandler) createTransaction(c echo.Context) error {
 	r := new(request.CreateTransaction)
 	if err := c.Bind(r); err != nil {
-		return c.JSON(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
+		return c.String(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
 	}
 	if err := c.Validate(r); err != nil {
-		return c.JSON(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
+		return c.String(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
 	}
 
 	transaction, err := t.transactionService.AddTransaction(*r)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, &transaction)
