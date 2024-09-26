@@ -11,6 +11,7 @@ import (
 
 const (
 	AddTransactionError = "AddTransactionError Local Client: "
+	CreateAccountError  = "CreateAccountError Local Client: "
 )
 
 type localClient struct {
@@ -23,7 +24,7 @@ func NewLocalClient() Client {
 		panic("failed to connect to local database")
 	}
 
-	if err := db.AutoMigrate(&domain.Transaction{}, &domain.Tag{}); err != nil {
+	if err := db.AutoMigrate(&domain.Transaction{}, &domain.Tag{}, &domain.Account{}); err != nil {
 		log.Error(err)
 	}
 
@@ -44,4 +45,30 @@ func (l *localClient) AddTransaction(model *domain.Transaction) (*domain.Transac
 	}
 
 	return model, nil
+}
+
+func (l *localClient) AddAccount(model *domain.Account) (*domain.Account, error) {
+	result := l.DB.Create(model)
+
+	if result.Error != nil {
+		return nil, errors.New(CreateAccountError + result.Error.Error())
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, errors.New(CreateAccountError + "no new accounts were created")
+	}
+
+	return model, nil
+}
+
+func (l *localClient) GetAccount(id uint) (*domain.Account, error) {
+	var account domain.Account
+
+	result := l.DB.Where("id = ?", id).First(&account)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &account, nil
 }

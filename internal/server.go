@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"github.com/socarcomunica/financial-api/internal/application/account"
 
 	"github.com/labstack/echo/v4"
 	"github.com/socarcomunica/financial-api/common"
@@ -34,6 +35,10 @@ func Run() error {
 
 	// add middlewares here
 
+	// Config accounts
+	accountsService := account.NewAccountsDatabase(database)
+	accountsHandler := http.NewAccountsHandler(accountsService)
+
 	// Config transactions
 	transactionsService := transaction.NewTransactionService(database)
 	transactionHandler := http.NewTransactionsHandler(transactionsService)
@@ -43,6 +48,7 @@ func Run() error {
 	// add here endpoints
 	handlers := []common.Handler{
 		transactionHandler,
+		accountsHandler,
 	}
 
 	for _, handler := range handlers {

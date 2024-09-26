@@ -44,7 +44,6 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 		DestinationID: request.DestinationID,
 	}
 
-	// TODO: Adds transaction to the database
 	transaction, err := t.Database.AddTransaction(transactionModel)
 	if err != nil {
 		return nil, errors.New(AddTransactionError + err.Error())

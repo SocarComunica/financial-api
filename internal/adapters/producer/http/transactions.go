@@ -32,17 +32,17 @@ func (t *TransactionsHandler) AddRoutes(router *echo.Router) {
 }
 
 func (t *TransactionsHandler) createTransaction(c echo.Context) error {
-	request := new(request.CreateTransaction)
-	if err := c.Bind(request); err != nil {
-		c.JSON(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
+	r := new(request.CreateTransaction)
+	if err := c.Bind(r); err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
 	}
-	if err := c.Validate(request); err != nil {
-		return err
+	if err := c.Validate(r); err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
 	}
 
-	transaction, err := t.transactionService.AddTransaction(*request)
+	transaction, err := t.transactionService.AddTransaction(*r)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusCreated, &transaction)
