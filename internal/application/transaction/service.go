@@ -15,17 +15,17 @@ type TransactionsDatabase interface {
 	AddTransaction(model *domain.Transaction) (*domain.Transaction, error)
 }
 
-type transactionService struct {
+type Service struct {
 	Database TransactionsDatabase
 }
 
-func NewTransactionService(database TransactionsDatabase) *transactionService {
-	return &transactionService{
+func NewTransactionService(database TransactionsDatabase) *Service {
+	return &Service{
 		Database: database,
 	}
 }
 
-func (t *transactionService) AddTransaction(request request.CreateTransaction) (*domain.Transaction, error) {
+func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Transaction, error) {
 
 	transactionModel := &domain.Transaction{
 		Amount:      request.Amount,
@@ -39,9 +39,9 @@ func (t *transactionService) AddTransaction(request request.CreateTransaction) (
 			}
 			return tags
 		}(),
-		Type:        request.Type,
-		Origin:      request.Origin,
-		Destination: request.Destination,
+		Type:          request.Type,
+		OriginID:      request.OriginID,
+		DestinationID: request.DestinationID,
 	}
 
 	// TODO: Adds transaction to the database
