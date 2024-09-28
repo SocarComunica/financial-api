@@ -82,3 +82,21 @@ func (l *localClient) UpdateAccountBalance(account *domain.Account) error {
 
 	return nil
 }
+
+func (l *localClient) GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error) {
+	var transactions []*domain.Transaction
+
+	//validate account exists
+	var account domain.Account
+	if result := l.DB.Where("id = ?", accountID).First(&account); result.Error != nil {
+		return nil, result.Error
+	}
+
+	result := l.DB.Where("account_id = ?", accountID).Find(&transactions).Limit(10).Offset(offset)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return transactions, nil
+}

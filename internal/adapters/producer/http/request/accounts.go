@@ -1,7 +1,7 @@
 package request
 
 type CreateAccount struct {
-	Name    string  `json:"name"`
-	Type    string  `json:"type"`
-	Balance float64 `json:"balance"`
+	Name    string  `json:"name" validate:"required"`
+	Type    string  `json:"type" validate:"required"`
+	Balance float64 `json:"balance" validate:"required"`
 }

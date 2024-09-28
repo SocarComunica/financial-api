@@ -1,8 +1,8 @@
 package http
 
 import (
-	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
 	"github.com/socarcomunica/financial-api/internal/domain"
@@ -16,6 +16,7 @@ const (
 
 type transactionService interface {
 	AddTransaction(request request.CreateTransaction) (*domain.Transaction, error)
+	GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error)
 }
 
 type TransactionsHandler struct {
@@ -35,16 +36,46 @@ func (t *TransactionsHandler) AddRoutes(router *echo.Router) {
 func (t *TransactionsHandler) createTransaction(c echo.Context) error {
 	r := new(request.CreateTransaction)
 	if err := c.Bind(r); err != nil {
-		return c.String(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"layer": CreateTransactionError,
+			"error": err.Error(),
+		})
 	}
 	if err := c.Validate(r); err != nil {
-		return c.String(http.StatusBadRequest, errors.New(CreateTransactionError+err.Error()).Error())
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"layer": CreateTransactionError,
+			"error": err.Error(),
+		})
 	}
 
 	transaction, err := t.transactionService.AddTransaction(*r)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"layer": CreateTransactionError,
+			"error": err.Error(),
+		})
 	}
 
 	return c.JSON(http.StatusCreated, &transaction)
+}
+
+func (t *TransactionsHandler) getTransactionsByAccount(c echo.Context) error {
+	accountIDParam := c.Param("accountID")
+	accountID, err := strconv.ParseUint(accountIDParam, 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid accountID"})
+	}
+
+	offsetParam := c.QueryParam("offset")
+	offset, err := strconv.Atoi(offsetParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid offset"})
+	}
+
+	transactions, err := t.transactionService.GetTransactionsByAccount(uint(accountID), offset)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Error retrieving transactions"})
+	}
+
+	return c.JSON(http.StatusOK, transactions)
 }

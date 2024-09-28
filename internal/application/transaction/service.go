@@ -16,6 +16,7 @@ type TransactionsDatabase interface {
 	AddTransaction(model *domain.Transaction) (*domain.Transaction, error)
 	GetAccount(id uint) (*domain.Account, error)
 	UpdateAccountBalance(account *domain.Account) error
+	GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error)
 }
 
 type Service struct {
@@ -95,4 +96,8 @@ func (t *Service) updateOriginAndDestinationBalance(request request.CreateTransa
 	if err := t.Database.UpdateAccountBalance(account); err != nil {
 		log.Error("error updating origin account balance: ", err)
 	}
+}
+
+func (t *Service) GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error) {
+	return t.Database.GetTransactionsByAccount(accountID, offset)
 }
