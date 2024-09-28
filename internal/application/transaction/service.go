@@ -3,6 +3,7 @@ package transaction
 import (
 	"errors"
 	"github.com/labstack/gommon/log"
+	"github.com/socarcomunica/financial-api/common"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
 	"github.com/socarcomunica/financial-api/internal/domain"
 )
@@ -34,7 +35,7 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 		return nil, errors.New(AddTransactionError + err.Error())
 	}
 
-	if account.Balance < request.Amount && request.Type.Name == "debit" {
+	if account.Balance < request.Amount && request.Type.Name == common.TransactionTypeDebit {
 		return nil, errors.New(AddTransactionError + "insufficient funds")
 	}
 
@@ -76,19 +77,22 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 }
 
 func (t *Service) updateOriginAndDestinationBalance(request request.CreateTransaction, account *domain.Account, destination *domain.Account) {
-	if request.Type.Name == "credit" {
+	switch request.Type.Name {
+	case common.TransactionTypeCredit:
 		account.Balance += request.Amount
-	} else {
+		break
+	case common.TransactionTypeDebit:
 		account.Balance -= request.Amount
-	}
-	if err := t.Database.UpdateAccountBalance(account); err != nil {
-		log.Error("error updating origin account balance: ", err)
-	}
-
-	if destination != nil && request.Type.Name == "transfer" {
+		break
+	case common.TransactionTypeTransfer:
+		account.Balance -= request.Amount
 		destination.Balance += request.Amount
 		if err := t.Database.UpdateAccountBalance(destination); err != nil {
 			log.Error("error updating destination account balance: ", err)
 		}
+		break
+	}
+	if err := t.Database.UpdateAccountBalance(account); err != nil {
+		log.Error("error updating origin account balance: ", err)
 	}
 }

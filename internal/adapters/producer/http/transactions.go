@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
 	"github.com/socarcomunica/financial-api/internal/domain"
+
+	"github.com/labstack/echo/v4"
 )
 
 const (

@@ -1,7 +1,7 @@
 package request
 
 type CreateTransaction struct {
-	Amount        float64                `json:"amount" validate:"required"`
+	Amount        float64                `json:"amount" validate:"required,positive"`
 	Description   string                 `json:"description"`
 	Tags          []CreateTransactionTag `json:"tags"`
 	Type          TransactionType        `json:"type"`
@@ -10,7 +10,7 @@ type CreateTransaction struct {
 }
 
 type TransactionType struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name" validate:"required,transaction_type"`
 }
 
 type CreateTransactionTag struct {
