@@ -1,14 +1,13 @@
 package internal
 
 import (
-	"errors"
-	"github.com/socarcomunica/financial-api/internal/application/account"
-
-	"github.com/labstack/echo/v4"
 	"github.com/socarcomunica/financial-api/common"
 	"github.com/socarcomunica/financial-api/internal/adapters/consumer/sql"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http"
+	"github.com/socarcomunica/financial-api/internal/application/account"
 	"github.com/socarcomunica/financial-api/internal/application/transaction"
+
+	"github.com/labstack/echo/v4"
 )
 
 func Run() error {
@@ -24,14 +23,7 @@ func Run() error {
 	e.Validator = common.NewCustomValidator()
 
 	// setup database
-	var database sql.Client
-	switch config.Environment {
-	case "development":
-		database = sql.NewLocalClient()
-
-	default:
-		return errors.New("undefined environment")
-	}
+	database := sql.NewClient(config.Database)
 
 	// add middlewares here
 

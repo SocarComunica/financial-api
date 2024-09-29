@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Environment string
+	Database    string
 }
 
 var config *Config
@@ -21,6 +22,7 @@ func InitConfig() {
 
 	config = &Config{
 		Environment: GetEnv("ENV", "development"),
+		Database:    GetEnv("DATABASE", "local.db"),
 	}
 }
 
