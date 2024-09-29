@@ -7,15 +7,9 @@ type Transaction struct {
 	Amount        float64  `json:"amount"`
 	Description   string   `json:"description"`
 	Tags          []Tag    `json:"tags" gorm:"many2many:transaction_tags;"`
-	TypeID        uint     `json:"type_id"`
-	Type          Type     `json:"type"`
+	Type          string   `json:"type"`
 	OriginID      uint     `json:"origin_id"`
 	Origin        Account  `json:"origin"`
 	DestinationID *uint    `json:"destination_id"`
 	Destination   *Account `json:"destination"`
-}
-
-type Type struct {
-	gorm.Model
-	Name string `json:"name" gorm:"unique,not null"`
 }

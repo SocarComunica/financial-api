@@ -92,7 +92,11 @@ func (l *localClient) GetTransactionsByAccount(accountID uint, offset int) ([]*d
 		return nil, result.Error
 	}
 
-	result := l.DB.Where("account_id = ?", accountID).Find(&transactions).Limit(10).Offset(offset)
+	result := l.DB.Where("origin_id = ?", accountID).
+		Limit(10).
+		Offset(offset).
+		Order("created_at desc").
+		Find(&transactions)
 
 	if result.Error != nil {
 		return nil, result.Error

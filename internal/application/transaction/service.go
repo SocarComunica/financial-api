@@ -36,7 +36,7 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 		return nil, errors.New(AddTransactionError + err.Error())
 	}
 
-	if account.Balance < request.Amount && request.Type.Name == common.TransactionTypeDebit {
+	if account.Balance < request.Amount && request.Type == common.TransactionTypeDebit {
 		return nil, errors.New(AddTransactionError + "insufficient funds")
 	}
 
@@ -52,7 +52,7 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 			}
 			return tags
 		}(),
-		Type:          domain.Type{Name: request.Type.Name},
+		Type:          request.Type,
 		OriginID:      request.OriginID,
 		Origin:        *account,
 		DestinationID: request.DestinationID,
@@ -78,7 +78,7 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 }
 
 func (t *Service) updateOriginAndDestinationBalance(request request.CreateTransaction, account *domain.Account, destination *domain.Account) {
-	switch request.Type.Name {
+	switch request.Type {
 	case common.TransactionTypeCredit:
 		account.Balance += request.Amount
 		break

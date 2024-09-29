@@ -8,4 +8,5 @@ type Account struct {
 	Type           string  `json:"type"`
 	Balance        float64 `json:"balance"`
 	InitialBalance float64 `json:"initial_balance"`
+	UserID         uint    `json:"user_id"`
 }

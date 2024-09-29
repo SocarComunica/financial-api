@@ -31,6 +31,7 @@ func NewTransactionsHandler(transactionsService transactionService) *Transaction
 
 func (t *TransactionsHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.POST, "transactions", t.createTransaction)
+	router.Add(echo.GET, "transactions/:accountID", t.getTransactionsByAccount)
 }
 
 func (t *TransactionsHandler) createTransaction(c echo.Context) error {
@@ -67,6 +68,9 @@ func (t *TransactionsHandler) getTransactionsByAccount(c echo.Context) error {
 	}
 
 	offsetParam := c.QueryParam("offset")
+	if offsetParam == "" {
+		offsetParam = "0"
+	}
 	offset, err := strconv.Atoi(offsetParam)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid offset"})

@@ -34,7 +34,7 @@ func GetEnv(key, fallback string) string {
 
 func GetConfig() (*Config, error) {
 	if config == nil {
-		return nil, errors.New("config not instantiaded")
+		return nil, errors.New("config not instantiated")
 	}
 
 	return config, nil
