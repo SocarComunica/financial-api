@@ -6,6 +6,7 @@ import (
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http"
 	"github.com/socarcomunica/financial-api/internal/application/account"
 	"github.com/socarcomunica/financial-api/internal/application/transaction"
+	"github.com/socarcomunica/financial-api/internal/application/user"
 
 	"github.com/labstack/echo/v4"
 )
@@ -27,6 +28,10 @@ func Run() error {
 
 	// add middlewares here
 
+	// Config users
+	usersService := user.NewUserService(database)
+	usersHandler := http.NewUsersHandler(usersService)
+
 	// Config accounts
 	accountsService := account.NewAccountsDatabase(database)
 	accountsHandler := http.NewAccountsHandler(accountsService)
@@ -41,6 +46,7 @@ func Run() error {
 	handlers := []common.Handler{
 		transactionHandler,
 		accountsHandler,
+		usersHandler,
 	}
 
 	for _, handler := range handlers {

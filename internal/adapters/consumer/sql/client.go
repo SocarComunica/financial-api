@@ -3,6 +3,7 @@ package sql
 import (
 	"github.com/socarcomunica/financial-api/internal/application/account"
 	"github.com/socarcomunica/financial-api/internal/application/transaction"
+	"github.com/socarcomunica/financial-api/internal/application/user"
 	"github.com/socarcomunica/financial-api/internal/domain"
 
 	"github.com/labstack/gommon/log"
@@ -13,6 +14,7 @@ import (
 type Client interface {
 	transaction.TransactionsDatabase
 	account.AccountsDatabase
+	user.UsersDatabase
 }
 
 type client struct {
