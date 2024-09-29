@@ -13,6 +13,7 @@ const (
 type AccountsDatabase interface {
 	AddAccount(model *domain.Account) (*domain.Account, error)
 	GetAccount(id uint) (*domain.Account, error)
+	GetAccountsByUser(userID uint) ([]*domain.Account, error)
 }
 
 type Service struct {
@@ -38,4 +39,8 @@ func (a *Service) AddAccount(request request.CreateAccount) (*domain.Account, er
 		return nil, errors.New(CreateAccountError + err.Error())
 	}
 	return account, nil
+}
+
+func (a *Service) GetAccountsByUser(userID uint) ([]*domain.Account, error) {
+	return a.Database.GetAccountsByUser(userID)
 }

@@ -43,6 +43,9 @@ func (c *client) GetTransactionsByAccount(accountID uint, offset int) ([]*domain
 	}
 
 	result := c.DB.Where("origin_id = ?", accountID).
+		Preload("Origin").
+		Preload("Destination").
+		Preload("Tags").
 		Limit(10).
 		Offset(offset).
 		Order("created_at desc").
