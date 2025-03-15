@@ -3,9 +3,11 @@ package http
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
+	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/response"
 	"github.com/socarcomunica/financial-api/internal/domain"
+
+	"github.com/labstack/echo/v4"
 )
 
 const (
@@ -53,5 +55,7 @@ func (u *UsersHandler) createUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, &user)
+	response := response.FromDomain(user)
+
+	return c.JSON(http.StatusCreated, response)
 }
