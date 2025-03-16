@@ -12,10 +12,12 @@ import (
 
 const (
 	CreateUserError = "CreateUserError Handler: "
+	LoginError      = "LoginError Handler: "
 )
 
 type userService interface {
 	AddUser(request request.CreateUser) (*domain.User, error)
+	Login(request request.Login) (*domain.User, error)
 }
 
 type UsersHandler struct {
@@ -30,6 +32,29 @@ func NewUsersHandler(userService userService) *UsersHandler {
 
 func (u *UsersHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.POST, "users", u.createUser)
+	router.Add(echo.POST, "users/login", u.login)
+}
+
+func (u *UsersHandler) login(c echo.Context) error {
+	r := new(request.Login)
+	if err := c.Bind(r); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"layer": LoginError,
+			"error": err.Error(),
+		})
+	}
+
+	user, err := u.userService.Login(*r)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"layer": LoginError,
+			"error": err.Error(),
+		})
+	}
+
+	response := response.FromDomain(user)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (u *UsersHandler) createUser(c echo.Context) error {

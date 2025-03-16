@@ -2,17 +2,21 @@ package user
 
 import (
 	"errors"
-	"golang.org/x/crypto/bcrypt"
+
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
 	"github.com/socarcomunica/financial-api/internal/domain"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
 	AddUserError = "AddUser Service Error: "
+	LoginError   = "Login Service Error: "
 )
 
 type UsersDatabase interface {
 	AddUser(model *domain.User) (*domain.User, error)
+	GetUserByEmail(email string) (*domain.User, error)
 }
 
 type Service struct {
@@ -42,6 +46,19 @@ func (u *Service) AddUser(request request.CreateUser) (*domain.User, error) {
 	user, err := u.Database.AddUser(userModel)
 	if err != nil {
 		return nil, errors.New(AddUserError + err.Error())
+	}
+
+	return user, nil
+}
+
+func (u *Service) Login(request request.Login) (*domain.User, error) {
+	user, err := u.Database.GetUserByEmail(request.Email)
+	if err != nil {
+		return nil, errors.New(LoginError + err.Error())
+	}
+
+	if !u.VerifyPassword(user.Password, request.Password) {
+		return nil, errors.New(LoginError + "invalid password")
 	}
 
 	return user, nil
