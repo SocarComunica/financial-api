@@ -2,11 +2,13 @@ package http
 
 import (
 	"errors"
-	"github.com/labstack/echo/v4"
-	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
-	"github.com/socarcomunica/financial-api/internal/domain"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo/v4"
+	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
+	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/response"
+	"github.com/socarcomunica/financial-api/internal/domain"
 )
 
 const (
@@ -48,7 +50,8 @@ func (a *AccountsHandler) createAccount(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	return c.JSON(http.StatusCreated, &account)
+	accountResponse := response.MapAccountToResponse(account)
+	return c.JSON(http.StatusCreated, accountResponse)
 }
 
 func (a *AccountsHandler) getAccountsByUser(c echo.Context) error {
@@ -65,5 +68,10 @@ func (a *AccountsHandler) getAccountsByUser(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, &accounts)
+	var accountResponses []*response.Account
+	for _, account := range accounts {
+		accountResponses = append(accountResponses, response.MapAccountToResponse(account))
+	}
+
+	return c.JSON(http.StatusOK, accountResponses)
 }

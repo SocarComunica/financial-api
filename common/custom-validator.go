@@ -15,6 +15,7 @@ func NewCustomValidator() *CustomValidator {
 	v := validator.New()
 	_ = v.RegisterValidation("positive", positive)
 	_ = v.RegisterValidation("transaction_type", transactionType)
+	_ = v.RegisterValidation("password", password)
 	return &CustomValidator{
 		validator: v,
 	}

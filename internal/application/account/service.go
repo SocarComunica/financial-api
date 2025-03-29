@@ -2,6 +2,7 @@ package account
 
 import (
 	"errors"
+
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
 	"github.com/socarcomunica/financial-api/internal/domain"
 )
@@ -32,6 +33,7 @@ func (a *Service) AddAccount(request request.CreateAccount) (*domain.Account, er
 		Type:           request.Type,
 		Balance:        request.Balance,
 		InitialBalance: request.Balance,
+		UserID:         request.UserID,
 	}
 
 	account, err := a.Database.AddAccount(accountModel)
