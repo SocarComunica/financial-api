@@ -8,8 +8,8 @@ type User struct {
 	Email    string `json:"email"`
 }
 
-// Create a user response from a user domain model
-func FromDomain(user *domain.User) *User {
+// MapUserToResponse creates a user response from a user domain model
+func MapUserToResponse(user *domain.User) *User {
 	return &User{
 		ID:       user.ID,
 		Username: user.Username,

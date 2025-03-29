@@ -52,9 +52,9 @@ func (u *UsersHandler) login(c echo.Context) error {
 		})
 	}
 
-	response := response.FromDomain(user)
+	userResponse := response.MapUserToResponse(user)
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, userResponse)
 }
 
 func (u *UsersHandler) createUser(c echo.Context) error {
