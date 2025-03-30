@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"errors"
+
 	"github.com/labstack/gommon/log"
 	"github.com/socarcomunica/financial-api/common"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
@@ -78,20 +79,27 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 }
 
 func (t *Service) updateOriginAndDestinationBalance(request request.CreateTransaction, account *domain.Account, destination *domain.Account) {
+	if account == nil {
+		log.Error("error updating balance: origin account is nil")
+		return
+	}
+
 	switch request.Type {
 	case common.TransactionTypeCredit:
 		account.Balance += request.Amount
-		break
 	case common.TransactionTypeDebit:
 		account.Balance -= request.Amount
-		break
 	case common.TransactionTypeTransfer:
+		if destination == nil {
+			log.Error("error updating balance: destination account is nil for transfer transaction")
+			return
+		}
 		account.Balance -= request.Amount
 		destination.Balance += request.Amount
 		if err := t.Database.UpdateAccountBalance(destination); err != nil {
 			log.Error("error updating destination account balance: ", err)
+			return
 		}
-		break
 	}
 	if err := t.Database.UpdateAccountBalance(account); err != nil {
 		log.Error("error updating origin account balance: ", err)
