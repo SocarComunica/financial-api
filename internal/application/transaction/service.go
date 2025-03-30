@@ -68,42 +68,35 @@ func (t *Service) AddTransaction(request request.CreateTransaction) (*domain.Tra
 		transactionModel.Destination = destination
 	}
 
+	if err := t.updateOriginAndDestinationBalance(request, account, destination); err != nil {
+		return nil, err
+	}
+
 	transaction, err := t.Database.AddTransaction(transactionModel)
 	if err != nil {
 		return nil, errors.New(AddTransactionError + err.Error())
 	}
 
-	go t.updateOriginAndDestinationBalance(request, account, destination)
-
 	return transaction, nil
 }
 
-func (t *Service) updateOriginAndDestinationBalance(request request.CreateTransaction, account *domain.Account, destination *domain.Account) {
-	if account == nil {
-		log.Error("error updating balance: origin account is nil")
-		return
-	}
-
+func (t *Service) updateOriginAndDestinationBalance(request request.CreateTransaction, account *domain.Account, destination *domain.Account) error {
 	switch request.Type {
 	case common.TransactionTypeCredit:
 		account.Balance += request.Amount
 	case common.TransactionTypeDebit:
 		account.Balance -= request.Amount
 	case common.TransactionTypeTransfer:
-		if destination == nil {
-			log.Error("error updating balance: destination account is nil for transfer transaction")
-			return
-		}
 		account.Balance -= request.Amount
 		destination.Balance += request.Amount
 		if err := t.Database.UpdateAccountBalance(destination); err != nil {
 			log.Error("error updating destination account balance: ", err)
-			return
 		}
 	}
 	if err := t.Database.UpdateAccountBalance(account); err != nil {
 		log.Error("error updating origin account balance: ", err)
 	}
+	return nil
 }
 
 func (t *Service) GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error) {
