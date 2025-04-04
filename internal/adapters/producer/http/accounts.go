@@ -14,11 +14,14 @@ import (
 const (
 	CreateAccountError     = "CreateAccountError Handler: "
 	GetAccountsByUserError = "GetAccountsByUserError Handler: "
+	DeleteAccountError     = "DeleteAccountError Handler: "
+	UserIDHeader           = "X-User-ID"
 )
 
 type accountService interface {
 	AddAccount(request request.CreateAccount) (*domain.Account, error)
 	GetAccountsByUser(userID uint) ([]*domain.Account, error)
+	DeleteAccount(id uint, userID uint) error
 }
 
 type AccountsHandler struct {
@@ -34,6 +37,7 @@ func NewAccountsHandler(accountService accountService) *AccountsHandler {
 func (a *AccountsHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.POST, "accounts", a.createAccount)
 	router.Add(echo.GET, "accounts/:userID", a.getAccountsByUser)
+	router.Add(echo.DELETE, "accounts/:id", a.deleteAccount)
 }
 
 func (a *AccountsHandler) createAccount(c echo.Context) error {
@@ -74,4 +78,31 @@ func (a *AccountsHandler) getAccountsByUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, accountResponses)
+}
+
+func (a *AccountsHandler) deleteAccount(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(DeleteAccountError+err.Error()).Error())
+	}
+
+	userIDStr := c.Request().Header.Get(UserIDHeader)
+	if userIDStr == "" {
+		return c.JSON(http.StatusBadRequest, errors.New(DeleteAccountError+"user ID header is required").Error())
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(DeleteAccountError+"invalid user ID format").Error())
+	}
+
+	err = a.accountService.DeleteAccount(uint(id), uint(userID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"layer": DeleteAccountError,
+			"error": err.Error(),
+		})
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

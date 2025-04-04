@@ -2,11 +2,13 @@ package sql
 
 import (
 	"errors"
+
 	"github.com/socarcomunica/financial-api/internal/domain"
 )
 
 const (
 	CreateAccountError = "CreateAccountError DB Client: "
+	DeleteAccountError = "DeleteAccountError DB Client: "
 )
 
 func (c *client) AddAccount(model *domain.Account) (*domain.Account, error) {
@@ -53,4 +55,25 @@ func (c *client) GetAccountsByUser(userID uint) ([]*domain.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func (c *client) DeleteAccount(id uint, userID uint) error {
+	// First verify that the account exists and belongs to the user
+	var account domain.Account
+	result := c.DB.Where("id = ? AND user_id = ?", id, userID).First(&account)
+	if result.Error != nil {
+		return errors.New(DeleteAccountError + result.Error.Error())
+	}
+
+	// Delete the account
+	result = c.DB.Delete(&account)
+	if result.Error != nil {
+		return errors.New(DeleteAccountError + result.Error.Error())
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New(DeleteAccountError + "no account was deleted")
+	}
+
+	return nil
 }

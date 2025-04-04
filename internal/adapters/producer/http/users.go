@@ -80,7 +80,7 @@ func (u *UsersHandler) createUser(c echo.Context) error {
 		})
 	}
 
-	response := response.FromDomain(user)
+	response := response.MapUserToResponse(user)
 
 	return c.JSON(http.StatusCreated, response)
 }

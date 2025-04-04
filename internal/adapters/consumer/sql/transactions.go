@@ -2,6 +2,7 @@ package sql
 
 import (
 	"errors"
+
 	"github.com/socarcomunica/financial-api/internal/domain"
 )
 
@@ -24,10 +25,31 @@ func (c *client) AddTransaction(model *domain.Transaction) (*domain.Transaction,
 	return model, nil
 }
 
-func (c *client) UpdateAccountBalance(account *domain.Account) error {
-	result := c.DB.Save(account)
-	if result.Error != nil {
-		return errors.New(ErrorUpdatingAccountBalance + result.Error.Error())
+func (c *client) UpdateAccountBalances(origin *domain.Account, destination *domain.Account) error {
+	// Start a transaction
+	tx := c.DB.Begin()
+	if tx.Error != nil {
+		return errors.New(ErrorUpdatingAccountBalance + tx.Error.Error())
+	}
+
+	// Update origin account
+	if err := tx.Save(origin).Error; err != nil {
+		tx.Rollback()
+		return errors.New(ErrorUpdatingAccountBalance + "origin: " + err.Error())
+	}
+
+	// Update destination account if provided
+	if destination != nil {
+		if err := tx.Save(destination).Error; err != nil {
+			tx.Rollback()
+			return errors.New(ErrorUpdatingAccountBalance + "destination: " + err.Error())
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return errors.New(ErrorUpdatingAccountBalance + "commit: " + err.Error())
 	}
 
 	return nil
