@@ -9,12 +9,14 @@ import (
 
 const (
 	CreateAccountError = "CreateAccount Service Error: "
+	DeleteAccountError = "DeleteAccount Service Error: "
 )
 
 type AccountsDatabase interface {
 	AddAccount(model *domain.Account) (*domain.Account, error)
 	GetAccount(id uint) (*domain.Account, error)
 	GetAccountsByUser(userID uint) ([]*domain.Account, error)
+	DeleteAccount(id uint, userID uint) error
 }
 
 type Service struct {
@@ -45,4 +47,18 @@ func (a *Service) AddAccount(request request.CreateAccount) (*domain.Account, er
 
 func (a *Service) GetAccountsByUser(userID uint) ([]*domain.Account, error) {
 	return a.Database.GetAccountsByUser(userID)
+}
+
+func (a *Service) DeleteAccount(id uint, userID uint) error {
+	// First verify that the account exists and belongs to the user
+	account, err := a.Database.GetAccount(id)
+	if err != nil {
+		return errors.New(DeleteAccountError + err.Error())
+	}
+
+	if account.UserID != userID {
+		return errors.New(DeleteAccountError + "account does not belong to the specified user")
+	}
+
+	return a.Database.DeleteAccount(id, userID)
 }
