@@ -1,13 +1,14 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/labstack/echo/v4"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
 	"github.com/socarcomunica/financial-api/internal/domain"
-
-	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 const (
@@ -17,6 +18,8 @@ const (
 type transactionService interface {
 	AddTransaction(request request.CreateTransaction) (*domain.Transaction, error)
 	GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error)
+	GetLatestTransactionByUser(userID uint) (*domain.Transaction, error)
+	GetTransactionsByUser(userID uint) ([]*domain.Transaction, error)
 }
 
 type TransactionsHandler struct {
@@ -32,6 +35,8 @@ func NewTransactionsHandler(transactionsService transactionService) *Transaction
 func (t *TransactionsHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.POST, "transactions", t.createTransaction)
 	router.Add(echo.GET, "transactions/:accountID", t.getTransactionsByAccount)
+	router.Add(echo.GET, "transactions/latest", t.getLatestTransactionByUser)
+	router.Add(echo.GET, "transactions/user/:userID", t.getAllTransactionsByUser)
 }
 
 func (t *TransactionsHandler) createTransaction(c echo.Context) error {
@@ -81,5 +86,51 @@ func (t *TransactionsHandler) getTransactionsByAccount(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Error retrieving transactions"})
 	}
 
+	return c.JSON(http.StatusOK, transactions)
+}
+
+// getLatestTransactionByUser handles requests to fetch the latest transaction for a user
+func (t *TransactionsHandler) getLatestTransactionByUser(c echo.Context) error {
+	userIDStr := c.QueryParam("user_id")
+	if userIDStr == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "user_id query parameter is required"})
+	}
+
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid user_id format"})
+	}
+
+	transaction, err := t.transactionService.GetLatestTransactionByUser(uint(userID))
+	if err != nil {
+		// Check if the error is 'record not found'
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, echo.Map{"error": "No transactions found for this user"})
+		}
+		// Handle other potential errors
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Error retrieving latest transaction"})
+	}
+
+	// We might want a specific response DTO later, but for now return the domain model
+	return c.JSON(http.StatusOK, transaction)
+}
+
+// getAllTransactionsByUser handles requests to fetch all transactions for a user
+func (t *TransactionsHandler) getAllTransactionsByUser(c echo.Context) error {
+	userIDStr := c.Param("userID") // Get userID from path parameter
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid userID format"})
+	}
+
+	transactions, err := t.transactionService.GetTransactionsByUser(uint(userID))
+	if err != nil {
+		// Since the service/db layer doesn't return a specific 'not found' for Find,
+		// we just return a general server error here. An empty list is the expected 'not found' result.
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Error retrieving transactions"})
+	}
+
+	// Service layer ensures transactions is an empty slice, not nil, if none are found.
+	// The JSON marshaler will correctly output [] for an empty slice.
 	return c.JSON(http.StatusOK, transactions)
 }

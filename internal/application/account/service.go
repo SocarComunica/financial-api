@@ -46,7 +46,14 @@ func (a *Service) AddAccount(request request.CreateAccount) (*domain.Account, er
 }
 
 func (a *Service) GetAccountsByUser(userID uint) ([]*domain.Account, error) {
-	return a.Database.GetAccountsByUser(userID)
+	accounts, err := a.Database.GetAccountsByUser(userID)
+	if err != nil {
+		return nil, err // Propagate database errors
+	}
+	if accounts == nil {
+		return []*domain.Account{}, nil // Return empty slice if no accounts found
+	}
+	return accounts, nil
 }
 
 func (a *Service) DeleteAccount(id uint, userID uint) error {

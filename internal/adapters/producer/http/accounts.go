@@ -72,7 +72,8 @@ func (a *AccountsHandler) getAccountsByUser(c echo.Context) error {
 		})
 	}
 
-	var accountResponses []*response.Account
+	// Initialize accountResponses as an empty slice, not nil
+	accountResponses := make([]*response.Account, 0)
 	for _, account := range accounts {
 		accountResponses = append(accountResponses, response.MapAccountToResponse(account))
 	}

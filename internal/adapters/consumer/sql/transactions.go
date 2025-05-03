@@ -79,3 +79,44 @@ func (c *client) GetTransactionsByAccount(accountID uint, offset int) ([]*domain
 
 	return transactions, nil
 }
+
+func (c *client) GetLatestTransactionByUser(userID uint) (*domain.Transaction, error) {
+	var transaction domain.Transaction
+
+	// Find the latest transaction associated with accounts owned by the user
+	result := c.DB.Joins("JOIN accounts ON accounts.id = transactions.origin_id").
+		Where("accounts.user_id = ?", userID).
+		Order("transactions.created_at DESC").
+		Preload("Origin").
+		Preload("Destination").
+		Preload("Tags").
+		First(&transaction)
+
+	if result.Error != nil {
+		// This will include gorm.ErrRecordNotFound if no transaction exists for the user
+		return nil, result.Error
+	}
+
+	return &transaction, nil
+}
+
+func (c *client) GetTransactionsByUser(userID uint) ([]*domain.Transaction, error) {
+	var transactions []*domain.Transaction
+
+	// Find all transactions associated with accounts owned by the user, ordered by creation date descending
+	result := c.DB.Joins("JOIN accounts ON accounts.id = transactions.origin_id").
+		Where("accounts.user_id = ?", userID).
+		Order("transactions.created_at DESC").
+		Preload("Origin"). // Preload related data
+		Preload("Destination").
+		Preload("Tags").
+		Find(&transactions) // Use Find to get all results
+
+	if result.Error != nil {
+		// Find does not return gorm.ErrRecordNotFound if no rows are found
+		return nil, result.Error
+	}
+
+	// If no rows found, GORM sets transactions to an empty slice ([]*domain.Transaction{}), not nil
+	return transactions, nil
+}

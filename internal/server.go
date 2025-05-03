@@ -9,6 +9,7 @@ import (
 	"github.com/socarcomunica/financial-api/internal/application/user"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func Run() error {
@@ -27,6 +28,7 @@ func Run() error {
 	database := sql.NewClient(config.Database)
 
 	// add middlewares here
+	e.Use(middleware.CORS())
 
 	// Config users
 	usersService := user.NewUserService(database)

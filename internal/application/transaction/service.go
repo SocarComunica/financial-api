@@ -17,6 +17,8 @@ type TransactionsDatabase interface {
 	GetAccount(id uint) (*domain.Account, error)
 	UpdateAccountBalances(origin *domain.Account, destination *domain.Account) error
 	GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error)
+	GetLatestTransactionByUser(userID uint) (*domain.Transaction, error)
+	GetTransactionsByUser(userID uint) ([]*domain.Transaction, error)
 }
 
 type Service struct {
@@ -104,4 +106,28 @@ func (t *Service) updateBalances(request request.CreateTransaction, origin *doma
 
 func (t *Service) GetTransactionsByAccount(accountID uint, offset int) ([]*domain.Transaction, error) {
 	return t.Database.GetTransactionsByAccount(accountID, offset)
+}
+
+func (t *Service) GetLatestTransactionByUser(userID uint) (*domain.Transaction, error) {
+	transaction, err := t.Database.GetLatestTransactionByUser(userID)
+	if err != nil {
+		// Consider specific error handling for 'not found' if needed
+		return nil, err
+	}
+	return transaction, nil
+}
+
+func (t *Service) GetTransactionsByUser(userID uint) ([]*domain.Transaction, error) {
+	transactions, err := t.Database.GetTransactionsByUser(userID)
+	if err != nil {
+		// If the error is specifically 'not found', we might want to return an empty slice and nil error.
+		// For now, we propagate the error. GORM's Find doesn't return ErrRecordNotFound on empty results, only on .First/.Last etc.
+		return nil, err
+	}
+	// GORM's Find populates the slice. If no records are found, it returns an empty slice, not nil.
+	if transactions == nil {
+		// This check is likely redundant due to GORM Find behavior but safe to keep.
+		return []*domain.Transaction{}, nil
+	}
+	return transactions, nil
 }
