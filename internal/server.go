@@ -5,6 +5,7 @@ import (
 	"github.com/socarcomunica/financial-api/internal/adapters/consumer/sql"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http"
 	"github.com/socarcomunica/financial-api/internal/application/account"
+	"github.com/socarcomunica/financial-api/internal/application/goal"
 	"github.com/socarcomunica/financial-api/internal/application/transaction"
 	"github.com/socarcomunica/financial-api/internal/application/user"
 
@@ -42,6 +43,10 @@ func Run() error {
 	transactionsService := transaction.NewTransactionService(database)
 	transactionHandler := http.NewTransactionsHandler(transactionsService)
 
+	// Config goals
+	goalsService := goal.NewGoalService(database)
+	goalsHandler := http.NewGoalsHandler(goalsService)
+
 	router := e.Router()
 
 	// add here endpoints
@@ -49,6 +54,7 @@ func Run() error {
 		transactionHandler,
 		accountsHandler,
 		usersHandler,
+		goalsHandler,
 	}
 
 	for _, handler := range handlers {

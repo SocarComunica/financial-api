@@ -2,6 +2,7 @@ package sql
 
 import (
 	"github.com/socarcomunica/financial-api/internal/application/account"
+	"github.com/socarcomunica/financial-api/internal/application/goal"
 	"github.com/socarcomunica/financial-api/internal/application/transaction"
 	"github.com/socarcomunica/financial-api/internal/application/user"
 	"github.com/socarcomunica/financial-api/internal/domain"
@@ -15,6 +16,7 @@ type Client interface {
 	transaction.TransactionsDatabase
 	account.AccountsDatabase
 	user.UsersDatabase
+	goal.GoalsDatabase
 }
 
 type client struct {
@@ -27,7 +29,7 @@ func NewClient(database string) Client {
 		panic("failed to connect to local database")
 	}
 
-	if err := db.AutoMigrate(&domain.Account{}, &domain.Tag{}, &domain.Transaction{}, &domain.User{}); err != nil {
+	if err := db.AutoMigrate(&domain.Account{}, &domain.Tag{}, &domain.Transaction{}, &domain.User{}, &domain.Goal{}); err != nil {
 		log.Error(err)
 	}
 
