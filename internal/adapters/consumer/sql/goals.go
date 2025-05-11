@@ -11,6 +11,7 @@ const (
 	GetGoalError        = "GetGoalError DB Client: "
 	UpdateGoalError     = "UpdateGoalError DB Client: "
 	GetLatestGoalsError = "GetLatestGoalsError DB Client: "
+	DeleteGoalError     = "DeleteGoalError DB Client: "
 )
 
 func (c *client) AddGoal(model *domain.Goal) (*domain.Goal, error) {
@@ -96,4 +97,18 @@ func (c *client) GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error) 
 	}
 
 	return goals, nil
+}
+
+func (c *client) DeleteGoal(id uint) error {
+	result := c.DB.Delete(&domain.Goal{}, id)
+
+	if result.Error != nil {
+		return errors.New(DeleteGoalError + result.Error.Error())
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New(DeleteGoalError + "no goals were deleted")
+	}
+
+	return nil
 }

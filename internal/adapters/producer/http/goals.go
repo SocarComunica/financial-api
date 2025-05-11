@@ -16,6 +16,7 @@ const (
 	GetGoalsError       = "GetGoalsError Handler: "
 	GetLatestGoalsError = "GetLatestGoalsError Handler: "
 	UpdateGoalError     = "UpdateGoalError Handler: "
+	DeleteGoalError     = "DeleteGoalError Handler: "
 )
 
 type goalService interface {
@@ -24,6 +25,7 @@ type goalService interface {
 	GetGoalsByUser(userID uint) ([]*domain.Goal, error)
 	GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error)
 	UpdateGoal(id uint, req request.UpdateGoal) (*domain.Goal, error)
+	DeleteGoal(id uint) error
 }
 
 type GoalsHandler struct {
@@ -40,6 +42,7 @@ func (g *GoalsHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.POST, "goals", g.createGoal)
 	router.Add(echo.GET, "goals/:id", g.getGoal)
 	router.Add(echo.PUT, "goals/:id", g.updateGoal)
+	router.Add(echo.DELETE, "goals/:id", g.deleteGoal)
 	router.Add(echo.GET, "users/:userID/goals", g.getGoalsByUser)
 	router.Add(echo.GET, "users/:userID/goals/latest", g.getLatestThreeGoalsByUser)
 }
@@ -132,4 +135,21 @@ func (g *GoalsHandler) updateGoal(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, goal)
+}
+
+func (g *GoalsHandler) deleteGoal(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(DeleteGoalError+"invalid goal ID: "+err.Error()).Error())
+	}
+
+	err = g.goalService.DeleteGoal(uint(id))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"layer": DeleteGoalError,
+			"error": err.Error(),
+		})
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

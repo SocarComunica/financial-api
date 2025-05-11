@@ -11,6 +11,7 @@ const (
 	AddGoalError               = "AddGoal Service Error: "
 	GetLatestGoalsServiceError = "GetLatestGoals Service Error: "
 	UpdateGoalServiceError     = "UpdateGoal Service Error: "
+	DeleteGoalServiceError     = "DeleteGoal Service Error: "
 )
 
 type GoalsDatabase interface {
@@ -19,6 +20,7 @@ type GoalsDatabase interface {
 	UpdateGoal(goal *domain.Goal) error
 	GetGoalsByUser(userID uint) ([]*domain.Goal, error)
 	GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error)
+	DeleteGoal(id uint) error
 }
 
 type Service struct {
@@ -115,4 +117,19 @@ func (g *Service) UpdateGoal(id uint, req request.UpdateGoal) (*domain.Goal, err
 	}
 
 	return goal, nil
+}
+
+func (g *Service) DeleteGoal(id uint) error {
+	// Primero verificamos que el goal exista
+	_, err := g.Database.GetGoal(id)
+	if err != nil {
+		return errors.New(DeleteGoalServiceError + "goal not found: " + err.Error())
+	}
+
+	err = g.Database.DeleteGoal(id)
+	if err != nil {
+		return errors.New(DeleteGoalServiceError + err.Error())
+	}
+
+	return nil
 }
