@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	CreateGoalError = "CreateGoalError DB Client: "
-	GetGoalError    = "GetGoalError DB Client: "
-	UpdateGoalError = "UpdateGoalError DB Client: "
+	CreateGoalError     = "CreateGoalError DB Client: "
+	GetGoalError        = "GetGoalError DB Client: "
+	UpdateGoalError     = "UpdateGoalError DB Client: "
+	GetLatestGoalsError = "GetLatestGoalsError DB Client: "
 )
 
 func (c *client) AddGoal(model *domain.Goal) (*domain.Goal, error) {
@@ -70,6 +71,28 @@ func (c *client) GetGoalsByUser(userID uint) ([]*domain.Goal, error) {
 
 	if result.Error != nil {
 		return nil, result.Error
+	}
+
+	return goals, nil
+}
+
+func (c *client) GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error) {
+	// Validate user exists
+	var user domain.User
+	if result := c.DB.Where("id = ?", userID).First(&user); result.Error != nil {
+		return nil, errors.New(GetLatestGoalsError + "user not found")
+	}
+
+	var goals []*domain.Goal
+	result := c.DB.Where("user_id = ?", userID).Order("updated_at desc").Limit(3).Find(&goals)
+
+	if result.Error != nil {
+		return nil, errors.New(GetLatestGoalsError + result.Error.Error())
+	}
+
+	// Return empty slice if no goals found, not an error
+	if len(goals) == 0 {
+		return []*domain.Goal{}, nil
 	}
 
 	return goals, nil

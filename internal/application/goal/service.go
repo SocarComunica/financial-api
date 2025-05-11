@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	AddGoalError = "AddGoal Service Error: "
+	AddGoalError               = "AddGoal Service Error: "
+	GetLatestGoalsServiceError = "GetLatestGoals Service Error: "
 )
 
 type GoalsDatabase interface {
@@ -16,6 +17,7 @@ type GoalsDatabase interface {
 	GetGoal(id uint) (*domain.Goal, error)
 	UpdateGoal(goal *domain.Goal) error
 	GetGoalsByUser(userID uint) ([]*domain.Goal, error)
+	GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error)
 }
 
 type Service struct {
@@ -60,4 +62,12 @@ func (g *Service) GetGoal(id uint) (*domain.Goal, error) {
 
 func (g *Service) GetGoalsByUser(userID uint) ([]*domain.Goal, error) {
 	return g.Database.GetGoalsByUser(userID)
+}
+
+func (g *Service) GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error) {
+	goals, err := g.Database.GetLatestThreeGoalsByUser(userID)
+	if err != nil {
+		return nil, errors.New(GetLatestGoalsServiceError + err.Error())
+	}
+	return goals, nil
 }

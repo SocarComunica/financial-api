@@ -11,15 +11,17 @@ import (
 )
 
 const (
-	CreateGoalError = "CreateGoalError Handler: "
-	GetGoalError    = "GetGoalError Handler: "
-	GetGoalsError   = "GetGoalsError Handler: "
+	CreateGoalError     = "CreateGoalError Handler: "
+	GetGoalError        = "GetGoalError Handler: "
+	GetGoalsError       = "GetGoalsError Handler: "
+	GetLatestGoalsError = "GetLatestGoalsError Handler: "
 )
 
 type goalService interface {
 	AddGoal(request request.CreateGoal) (*domain.Goal, error)
 	GetGoal(id uint) (*domain.Goal, error)
 	GetGoalsByUser(userID uint) ([]*domain.Goal, error)
+	GetLatestThreeGoalsByUser(userID uint) ([]*domain.Goal, error)
 }
 
 type GoalsHandler struct {
@@ -36,6 +38,7 @@ func (g *GoalsHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.POST, "goals", g.createGoal)
 	router.Add(echo.GET, "goals/:id", g.getGoal)
 	router.Add(echo.GET, "users/:userID/goals", g.getGoalsByUser)
+	router.Add(echo.GET, "users/:userID/goals/latest", g.getLatestThreeGoalsByUser)
 }
 
 func (g *GoalsHandler) createGoal(c echo.Context) error {
@@ -82,6 +85,23 @@ func (g *GoalsHandler) getGoalsByUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"layer": GetGoalsError,
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, goals)
+}
+
+func (g *GoalsHandler) getLatestThreeGoalsByUser(c echo.Context) error {
+	userID, err := strconv.Atoi(c.Param("userID"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(GetLatestGoalsError+err.Error()).Error())
+	}
+
+	goals, err := g.goalService.GetLatestThreeGoalsByUser(uint(userID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"layer": GetLatestGoalsError,
 			"error": err.Error(),
 		})
 	}
