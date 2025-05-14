@@ -5,6 +5,7 @@ import (
 	"github.com/socarcomunica/financial-api/internal/adapters/consumer/sql"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http"
 	"github.com/socarcomunica/financial-api/internal/application/account"
+	"github.com/socarcomunica/financial-api/internal/application/friendship"
 	"github.com/socarcomunica/financial-api/internal/application/goal"
 	"github.com/socarcomunica/financial-api/internal/application/transaction"
 	"github.com/socarcomunica/financial-api/internal/application/user"
@@ -47,6 +48,10 @@ func Run() error {
 	goalsService := goal.NewGoalService(database)
 	goalsHandler := http.NewGoalsHandler(goalsService)
 
+	// Config friendship
+	friendshipService := friendship.NewFriendshipService(database)
+	friendshipHandler := http.NewFriendshipHandler(friendshipService)
+
 	router := e.Router()
 
 	// add here endpoints
@@ -55,6 +60,7 @@ func Run() error {
 		accountsHandler,
 		usersHandler,
 		goalsHandler,
+		friendshipHandler,
 	}
 
 	for _, handler := range handlers {

@@ -7,21 +7,22 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/socarcomunica/financial-api/internal/adapters/producer/http/request"
-	"github.com/socarcomunica/financial-api/internal/domain"
 )
 
 const (
-	SendFriendRequestError = "SendFriendRequestError Handler: "
-	UpdateFriendshipError  = "UpdateFriendshipError Handler: "
-	GetFriendsError        = "GetFriendsError Handler: "
-	GetFriendStatsError    = "GetFriendStatsError Handler: "
+	SendFriendRequestError        = "SendFriendRequestError Handler: "
+	UpdateFriendshipError         = "UpdateFriendshipError Handler: "
+	GetFriendsError               = "GetFriendsError Handler: "
+	GetFriendStatsError           = "GetFriendStatsError Handler: "
+	GetPendingFriendRequestsError = "GetPendingFriendRequestsError Handler: "
 )
 
 type friendshipService interface {
-	SendFriendRequest(userID, friendID uint) (*domain.Friendship, error)
+	SendFriendRequest(userID, friendID uint) (*request.FriendshipOutputDTO, error)
 	UpdateFriendshipStatus(id uint, status string) error
-	GetFriends(userID uint) ([]*domain.User, error)
-	GetFriendStats(userID uint) (*request.FriendStats, error)
+	GetFriends(userID uint) ([]*request.UserOutputDTO, error)
+	GetFriendsStatsSortedByCompletedGoals(userID uint) (*request.UserAndFriendsStatsResponse, error)
+	GetPendingFriendRequests(userID uint) ([]*request.FriendshipOutputDTO, error)
 }
 
 type FriendshipHandler struct {
@@ -39,6 +40,7 @@ func (f *FriendshipHandler) AddRoutes(router *echo.Router) {
 	router.Add(echo.PUT, "friendships/:id/status", f.updateFriendshipStatus)
 	router.Add(echo.GET, "users/:userID/friends", f.getFriends)
 	router.Add(echo.GET, "users/:userID/friends/stats", f.getFriendStats)
+	router.Add(echo.GET, "users/:userID/friend-requests/pending", f.getPendingFriendRequests)
 }
 
 func (f *FriendshipHandler) sendFriendRequest(c echo.Context) error {
@@ -55,7 +57,7 @@ func (f *FriendshipHandler) sendFriendRequest(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errors.New(SendFriendRequestError+err.Error()).Error())
 	}
 
-	friendship, err := f.friendshipService.SendFriendRequest(uint(userID), r.FriendID)
+	friendshipOutput, err := f.friendshipService.SendFriendRequest(uint(userID), r.FriendID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"layer": SendFriendRequestError,
@@ -63,7 +65,7 @@ func (f *FriendshipHandler) sendFriendRequest(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, friendship)
+	return c.JSON(http.StatusCreated, friendshipOutput)
 }
 
 func (f *FriendshipHandler) updateFriendshipStatus(c echo.Context) error {
@@ -97,7 +99,7 @@ func (f *FriendshipHandler) getFriends(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errors.New(GetFriendsError+"invalid user ID: "+err.Error()).Error())
 	}
 
-	friends, err := f.friendshipService.GetFriends(uint(userID))
+	friendsOutput, err := f.friendshipService.GetFriends(uint(userID))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"layer": GetFriendsError,
@@ -105,7 +107,7 @@ func (f *FriendshipHandler) getFriends(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, friends)
+	return c.JSON(http.StatusOK, friendsOutput)
 }
 
 func (f *FriendshipHandler) getFriendStats(c echo.Context) error {
@@ -114,7 +116,7 @@ func (f *FriendshipHandler) getFriendStats(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errors.New(GetFriendStatsError+"invalid user ID: "+err.Error()).Error())
 	}
 
-	stats, err := f.friendshipService.GetFriendStats(uint(userID))
+	response, err := f.friendshipService.GetFriendsStatsSortedByCompletedGoals(uint(userID))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"layer": GetFriendStatsError,
@@ -122,5 +124,22 @@ func (f *FriendshipHandler) getFriendStats(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, stats)
+	return c.JSON(http.StatusOK, response)
+}
+
+func (f *FriendshipHandler) getPendingFriendRequests(c echo.Context) error {
+	userID, err := strconv.Atoi(c.Param("userID"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errors.New(GetPendingFriendRequestsError+"invalid user ID: "+err.Error()).Error())
+	}
+
+	pendingRequestsOutput, err := f.friendshipService.GetPendingFriendRequests(uint(userID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"layer": GetPendingFriendRequestsError,
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, pendingRequestsOutput)
 }
